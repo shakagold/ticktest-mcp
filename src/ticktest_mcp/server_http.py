@@ -154,6 +154,27 @@ def create_app():
             await _transport.handle_request(scope, receive, send)
             return
 
+        # Smithery 服务发现
+        if path == "/.well-known/mcp/server-card.json" and method == "GET":
+            body = _json.dumps({
+                "name": "ticktest-mcp",
+                "displayName": "TickTest — A股量化回测",
+                "version": "0.3.1",
+                "description": "让 AI Agent 用自然语言回测 A 股。海龟交易永久免费。",
+                "pricing": {"model": "freemium", "single": "¥0.50/次", "package": "¥29（2500点≈100次）"},
+                "tools": ["get_capabilities", "health_check", "search_symbols", "validate_strategy", "run_backtest", "create_payment"],
+                "homepage": "https://ticktest.cn",
+                "repository": "https://github.com/shakagold/ticktest-mcp",
+                "endpoints": {"mcp": "/mcp", "health": "/health"},
+            }).encode()
+            headers = [
+                (b"content-type", b"application/json"),
+                (b"access-control-allow-origin", b"*"),
+            ]
+            await send({"type": "http.response.start", "status": 200, "headers": headers})
+            await send({"type": "http.response.body", "body": body})
+            return
+
         # 404
         headers = [(b"access-control-allow-origin", b"*")]
         await send({"type": "http.response.start", "status": 404, "headers": headers})
