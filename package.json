@@ -1,0 +1,12 @@
+{
+  "name": "ticktest-mcp",
+  "version": "0.3.1",
+  "description": "TickTest A股量化回测 MCP Server — 让 AI Agent 用自然语言回测 A 股",
+  "main": "src/ticktest_mcp/server.py",
+  "keywords": ["mcp", "ticktest", "backtest", "a-stock", "quant", "finance"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shakagold/ticktest-mcp"
+  }
+}

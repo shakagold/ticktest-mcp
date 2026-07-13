@@ -1,0 +1,66 @@
+{
+  "$schema": "https://registry.modelcontextprotocol.io/schemas/2025-10-17/server.json",
+  "name": "io.ticktest.mcp-server",
+  "displayName": "TickTest",
+  "version": "0.3.1",
+  "description": "A股量化波段回测 — 让 AI Agent 用自然语言回测 A 股。纯均线策略引擎，单/双均线×任意周期×日/周/月×跨频组合，¥0.50/次，海龟交易永久免费。",
+  "icon": "https://ticktest.cn/favicon.ico",
+  "homepage": "https://ticktest.cn",
+  "documentation": "https://ticktest.cn/docs",
+  "license": "MIT",
+  "runtime": "python",
+  "transport": {
+    "type": "stdio",
+    "command": "python",
+    "args": ["-m", "ticktest_mcp"]
+  },
+  "install": {
+    "type": "pip",
+    "package": "https://ticktest.cn/mcp/ticktest_mcp-0.3.1-py3-none-any.whl"
+  },
+  "env": {
+    "TICKTEST_API_URL": {
+      "description": "TickTest API 地址",
+      "required": false,
+      "default": "https://api.ticktest.cn"
+    },
+    "TICKTEST_API_KEY": {
+      "description": "API Key（不配则只能调公开 Tool）",
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "get_capabilities",
+      "description": "获取 TickTest 回测 API 的能力清单：可用策略分类、因子列表、支持的股票范围、定价信息。AI Agent 应先调用此工具了解可用能力。"
+    },
+    {
+      "name": "health_check",
+      "description": "检查 TickTest API 服务是否正常运行。返回服务状态和各子模块健康信息。"
+    },
+    {
+      "name": "search_symbols",
+      "description": "免费搜索 A 股股票代码。输入中文名称或代码片段，返回匹配的股票列表。"
+    },
+    {
+      "name": "validate_strategy",
+      "description": "免费验证策略参数是否合法。支持 SINGLE_MA / MA_CROSSOVER / TURTLE_TRADING 三种策略族。"
+    },
+    {
+      "name": "run_backtest",
+      "description": "对指定 A 股股票运行历史回测。自然语言描述策略，返回收益率、夏普比率、最大回撤等六大指标。¥0.50/次，海龟交易永久免费。"
+    },
+    {
+      "name": "create_payment",
+      "description": "创建支付订单，同时生成单次 ¥0.50 和套餐 ¥29 两张支付码。支付宝网页扫码支付，到账自动充值。"
+    }
+  ],
+  "categories": ["finance", "data-analysis", "developer-tools"],
+  "tags": ["a-stock", "backtest", "quant", "china", "trading"],
+  "pricing": {
+    "model": "freemium",
+    "free_strategy": "海龟交易法则 — 永久免费",
+    "paid": "¥0.50/次 或 ¥29/月（100次）"
+  },
+  "repository": "https://ticktest.cn/mcp/"
+}
