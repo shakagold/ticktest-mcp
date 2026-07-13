@@ -1,18 +1,45 @@
-# TickTest MCP Server
+# 🐢 TickTest — A 股量化回测 MCP Server
 
-让 AI Agent（Claude Code、Cursor、Windsurf 等）通过 MCP 协议直接调用 TickTest A 股量化回测 API。
+> 让 AI Agent 用自然语言回测 A 股。说一句话，秒出结果。
 
-## 安装
+[![Smithery](https://img.shields.io/badge/Smithery-82%20分-success)](https://smithery.ai/server/shaka-gold/ticktest-mcp-v1)
+[![MCP](https://img.shields.io/badge/MCP-6%20Tools-blue)](https://api.ticktest.cn/mcp)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://pypi.org/project/ticktest-mcp/)
+
+---
+
+## ⚡ 一行配置
+
+把下面这段贴进 Claude Code 的 `.claude/settings.json`，**不需要装任何东西**：
+
+```json
+{
+  "mcpServers": {
+    "ticktest": {
+      "type": "url",
+      "url": "https://api.ticktest.cn/mcp"
+    }
+  }
+}
+```
+
+重启 Claude Code，然后直接说：
+
+> *"帮我用海龟交易回测贵州茅台"*
+
+Agent 会搜索 `sh600519` → 回测 → 返回收益率、夏普比率、最大回撤、胜率等六大指标。**海龟交易永久免费**。
+
+> 📍 也支持 ChatGPT、Cursor、Windsurf、腾讯 ADP — 任何兼容 MCP Streamable HTTP 的客户端。填 URL 即可。
+
+---
+
+## 📦 本地安装（可选）
 
 ```bash
 pip install ticktest-mcp
 ```
 
-## 配置
-
-### Claude Code
-
-在 `.claude/mcp.json` 或项目根目录 `.mcp.json` 中添加：
+配置：
 
 ```json
 {
@@ -22,75 +49,65 @@ pip install ticktest-mcp
       "args": ["-m", "ticktest_mcp"],
       "env": {
         "TICKTEST_API_URL": "https://api.ticktest.cn",
-        "TICKTEST_API_KEY": "tt_your_api_key_here"
+        "TICKTEST_API_KEY": "tt_your_key_here"
       }
     }
   }
 }
 ```
 
-### Cursor / Windsurf
+---
 
-在 MCP 配置中添加：
+## 🔑 获取 API Key
 
-```json
-{
-  "mcpServers": {
-    "ticktest": {
-      "command": "ticktest-mcp",
-      "env": {
-        "TICKTEST_API_URL": "https://api.ticktest.cn",
-        "TICKTEST_API_KEY": "tt_your_api_key_here"
-      }
-    }
-  }
-}
-```
+无需离开对话，Agent 帮你完成注册：
 
-## 获取 API Key
+1. Agent 询问邮箱 → 调用 `send-code` → 邮件收到 6 位验证码
+2. 告诉 Agent 验证码 → 注册成功 → 拿到 **API Key + 500 信用点**（≈ 20 次回测）
 
-无需离开对话，Agent 会帮你完成注册：
+没有 Key 也能用 4 个免费 Tool：`get_capabilities` / `health_check` / `search_symbols` / `validate_strategy`
 
-1. Agent 询问你的邮箱
-2. Agent 调用 `send-code` → 你收到 6 位验证码
-3. 告诉 Agent 验证码 → 注册成功，拿到 API Key + 500 信用点
-4. Agent 配置 Key，开始回测
+---
 
-## Tools
+## 🛠 6 个 Tools
 
-| Tool | 认证 | 说明 |
+| Tool | Key | 说明 |
+|:-----|:---|:-----|
+| `get_capabilities` | ❌ | 策略、因子、定价、股票范围 |
+| `health_check` | ❌ | 检查 API 服务状态 |
+| `search_symbols` | ❌ | 中文名 → 股票代码 |
+| `validate_strategy` | ❌ | 免费校验策略参数 |
+| `run_backtest` | ✅ | 运行回测，**¥0.50/次** |
+| `create_payment` | ✅ | 双通道支付（支付宝扫码） |
+
+---
+
+## 💰 定价
+
+| 套餐 | 价格 | 内容 |
 |:-----|:-----|:-----|
-| `get_capabilities` | 公开 | 获取策略、因子、定价、注册流程 |
-| `health_check` | 公开 | 检查 API 服务状态 |
-| `search_symbols` | 公开 | 搜索 A 股股票代码 |
-| `validate_strategy` | 需 Key | 免费验证策略参数 |
-| `run_backtest` | 需 Key | 运行回测，¥0.50/次 |
-| `create_payment` | 需 Key | 生成支付页面 |
+| 🐢 海龟交易 | **永久免费** | 不限次数 |
+| 🎁 注册赠送 | ¥0 | 500 信用点 ≈ 20 次 |
+| 🔄 单次 | ¥0.50 | 1 次回测 |
+| ⭐ 入门 | ¥29/月 | 2500 点 ≈ 100 次 |
 
-## 快速体验
+---
 
-海龟交易策略**永久免费**，无需付费：
+## 🌐 环境变量
 
-```
-Agent: 帮我回测中际旭创，海龟交易
-→ 自动搜索 sz300308 → 回测 → 返回收益率/夏普/回撤/胜率
-```
-
-## 定价
-
-- 单次回测：¥0.50（25 信用点）
-- 入门月卡：¥29（2500 点 ≈ 100 次）
-- 注册送 500 信用点（≈ 20 次）
-- 海龟交易：永久免费
-
-## 环境变量
-
-| 变量 | 必填 | 说明 |
+| 变量 | 必填 | 默认值 |
 |:-----|:-----|:-----|
-| `TICKTEST_API_URL` | 否 | API 地址，默认 `https://api.ticktest.cn` |
-| `TICKTEST_API_KEY` | 否 | API Key，不配则只能调公开 Tool |
-| `TICKTEST_BACKTEST_TIMEOUT` | 否 | 回测超时秒数，默认 90 |
+| `TICKTEST_API_URL` | 否 | `https://api.ticktest.cn` |
+| `TICKTEST_API_KEY` | 否 | 空（只能调公开 Tool） |
 
-## License
+---
 
-MIT
+## 📚 链接
+
+- 官网：[ticktest.cn](https://ticktest.cn)
+- 注册：[ticktest.cn/developer.html](https://ticktest.cn/developer.html)
+- Smithery：[smithery.ai/server/shaka-gold/ticktest-mcp-v1](https://smithery.ai/server/shaka-gold/ticktest-mcp-v1)
+
+---
+
+MIT License
