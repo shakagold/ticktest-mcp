@@ -27,15 +27,17 @@ requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
     "httpx>=0.27.0",
+    "uvicorn>=0.30.0",
 ]
 
 [project.urls]
 Homepage = "https://ticktest.cn"
 Documentation = "https://ticktest.cn/docs"
-Repository = "https://github.com/ticktest/ticktest-mcp"
+Repository = "https://github.com/shakagold/ticktest-mcp"
 
 [project.scripts]
 ticktest-mcp = "ticktest_mcp.server:main"
+ticktest-mcp-http = "ticktest_mcp.server_http:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ticktest_mcp"]

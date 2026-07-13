@@ -1,0 +1,36 @@
+# Smithery Deployment Configuration
+# TickTest MCP Server — HTTP mode for cloud hosting
+# https://smithery.ai/server/@shakagold/ticktest-mcp
+
+runtime: "container"
+
+startCommand:
+  type: "http"
+  command: "python"
+  args: ["-m", "ticktest_mcp.server_http"]
+  port: 8000
+
+configSchema:
+  type: "object"
+  properties:
+    TICKTEST_API_URL:
+      type: "string"
+      description: "TickTest API 地址"
+      default: "https://api.ticktest.cn"
+    TICKTEST_API_KEY:
+      type: "string"
+      description: "API Key（不配则只能调公开 Tool）"
+      secret: true
+  required: []
+
+health:
+  path: "/health"
+  interval: 30
+
+resources:
+  cpu: 0.5
+  memory: 256MB
+
+scaling:
+  min: 1
+  max: 1

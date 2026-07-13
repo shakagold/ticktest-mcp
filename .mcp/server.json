@@ -14,6 +14,10 @@
     "command": "python",
     "args": ["-m", "ticktest_mcp"]
   },
+  "httpTransport": {
+    "type": "streamable-http",
+    "url": "https://smithery.ai/server/@shakagold/ticktest-mcp/mcp"
+  },
   "install": {
     "type": "pip",
     "package": "https://ticktest.cn/mcp/ticktest_mcp-0.3.1-py3-none-any.whl"
