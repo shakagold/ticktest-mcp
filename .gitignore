@@ -1,0 +1,5 @@
+# 构建产物
+dist/
+__pycache__/
+*.egg-info/
+.venv/
