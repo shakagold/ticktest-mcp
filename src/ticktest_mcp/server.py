@@ -17,7 +17,7 @@ TickTest MCP Server — AI Agent 的 A 股回测入口
     #   "command": "python",
     #   "args": ["-m", "09-MCP-Server.server"],
     #   "cwd": "/path/to/TickTest",
-    #   "env": { "TICKTEST_API_KEY": "tk_xxx", "TICKTEST_API_URL": "https://api.ticktest.cn" }
+    #   "env": { "TICKTEST_API_KEY": "tk_xxx", "TICKTEST_API_URL": "https://api-hk.ticktest.cn" }
     # }
 
 参考：
@@ -48,7 +48,7 @@ from mcp.types import Tool, TextContent
 
 # ── 配置 ──────────────────────────────────────────────
 
-API_URL = os.environ.get("TICKTEST_API_URL", "https://api.ticktest.cn").rstrip("/")
+API_URL = os.environ.get("TICKTEST_API_URL", "https://api-hk.ticktest.cn").rstrip("/")
 API_KEY = os.environ.get("TICKTEST_API_KEY", "")
 HAS_AUTH = bool(API_KEY)
 

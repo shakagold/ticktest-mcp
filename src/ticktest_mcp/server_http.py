@@ -11,7 +11,7 @@ TickTest MCP Server — HTTP 传输入口（用于 Smithery / 云端部署）
 
 环境变量：
     TICKTEST_API_KEY  — API Key（不配则只能调公开 Tool）
-    TICKTEST_API_URL  — API 地址（默认 https://api.ticktest.cn）
+    TICKTEST_API_URL  — API 地址（默认 https://api-hk.ticktest.cn）
     HTTP_PORT         — 监听端口（默认 8000）
     HTTP_HOST         — 监听地址（默认 0.0.0.0）
 """
