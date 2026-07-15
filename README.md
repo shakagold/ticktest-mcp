@@ -44,6 +44,15 @@ Agent 会搜索 `sh600519` → 回测 → 返回收益率、夏普比率、最�
 
 > 📍 也支持 ChatGPT、Cursor、Windsurf、腾讯 ADP — 任何兼容 MCP 的客户端。也可通过 [Smithery](https://smithery.ai/server/shaka-gold/ticktest-mcp-v1) 零安装使用。
 
+
+---
+
+## 📸 Demo
+
+> 用户说「帮我用海龟交易回测贵州茅台」，Agent 自动搜索 → 回测 → 六大指标，全程自然语言，零代码。
+
+![TickTest Demo](ticktest-demo-zhongjixuchuang.png)
+
 ---
 
 ## 🔑 获取 API Key
