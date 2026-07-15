@@ -96,7 +96,6 @@ Agent 会搜索 `sh600519` → 回测 → 返回收益率、夏普比率、最�
 
 | 变量 | 必填 | 默认值 |
 |:-----|:-----|:-----|
-| `TICKTEST_API_URL` | 否 | `https://api.ticktest.cn` |
 | `TICKTEST_API_KEY` | 否 | 空（只能调公开 Tool） |
 
 ---
