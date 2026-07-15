@@ -53,6 +53,8 @@ Agent 会搜索 `sh600519` → 回测 → 返回收益率、夏普比率、最�
 
 ![TickTest Demo](ticktest-demo-zhongjixuchuang.png)
 
+![TickTest 支付与能力](screen1.png)
+
 ---
 
 ## 🔑 获取 API Key
