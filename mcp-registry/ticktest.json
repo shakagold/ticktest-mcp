@@ -1,0 +1,11 @@
+{
+  "name": "TickTest",
+  "description": "A股量化回测 MCP Server。AI Agent 用自然语言回测 A 股，支持单/双均线策略×任意周期×跨频组合。海龟交易永久免费。",
+  "repository": "https://github.com/shakagold/ticktest-mcp",
+  "category": "Finance",
+  "keywords": ["stock", "backtest", "quant", "china", "a-share"],
+  "install": {
+    "pip": "pip install ticktest-mcp"
+  },
+  "tools": ["get_capabilities", "health_check", "search_symbols", "validate_strategy", "run_backtest", "create_payment"]
+}
