@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.shakagold/ticktest-mcp",
+  "title": "TickTest — A股量化回测",
+  "description": "A股量化回测 MCP Server——让 AI Agent 用自然语言回测 A 股，说一句秒出结果。单/双均线×任意周期×跨频组合，海龟交易永久免费。",
+  "version": "0.3.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "ticktest-mcp",
+      "version": "0.3.1",
+      "transport": {
+        "type": "stdio",
+        "command": "python",
+        "args": ["-m", "ticktest_mcp"]
+      }
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 # 🐢 TickTest — A 股量化回测 MCP Server
+<!-- mcp-name: io.github.shakagold/ticktest-mcp -->
 
 > 让 AI Agent 用自然语言回测 A 股。说一句话，秒出结果。
 
