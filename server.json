@@ -10,9 +10,7 @@
       "identifier": "ticktest-mcp",
       "version": "0.3.1",
       "transport": {
-        "type": "stdio",
-        "command": "python",
-        "args": ["-m", "ticktest_mcp"]
+        "type": "stdio"
       }
     }
   ]
