@@ -3,7 +3,7 @@
   "name": "io.ticktest.mcp-server",
   "displayName": "TickTest",
   "version": "0.3.1",
-  "description": "A股量化波段回测 — 让 AI Agent 用自然语言回测 A 股。纯均线策略引擎，单/双均线×任意周期×日/周/月×跨频组合，¥0.50/次，海龟交易永久免费。",
+  "description": "A股量化回测 MCP Server——让 AI Agent 用自然语言回测 A 股，说一句秒出结果。单/双均线×任意周期×跨频组合，海龟交易永久免费。",
   "icon": "https://ticktest.cn/favicon.ico",
   "homepage": "https://ticktest.cn",
   "documentation": "https://ticktest.cn/docs",
@@ -59,7 +59,7 @@
       "description": "创建支付订单，同时生成单次 ¥0.50 和套餐 ¥29 两张支付码。支付宝网页扫码支付，到账自动充值。"
     }
   ],
-  "categories": ["finance", "data-analysis", "developer-tools"],
+  "categories": ["finance", "quant", "china-stock", "data-analysis", "developer-tools"],
   "tags": ["a-stock", "backtest", "quant", "china", "trading"],
   "pricing": {
     "model": "freemium",

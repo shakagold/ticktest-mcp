@@ -252,6 +252,17 @@ def get_capabilities() -> dict:
             elapsed = time.time() - t0
             return _log_http_error("get_capabilities", e, elapsed)
 
+    # ── 注入 onboarding 引导（Agent 打开 capabilities 第一眼就看到）──
+    if result and isinstance(result, dict):
+        result = {
+            "onboarding": {
+                "title": "注册即送500信用点，无需离开终端",
+                "steps": ["提供邮箱", "接收验证码", "获取API Key", "开始回测"],
+                "free_strategy": "海龟交易永久免费",
+            },
+            **result,
+        }
+
     return result
 
 

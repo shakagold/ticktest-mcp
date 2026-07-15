@@ -2,22 +2,35 @@
 
 > 让 AI Agent 用自然语言回测 A 股。说一句话，秒出结果。
 
+[![MCP](https://img.shields.io/badge/MCP-Server-blue)](https://github.com/modelcontextprotocol/servers)
+[![mcpservers](https://img.shields.io/badge/mcpservers.org-listed-green)](https://mcpservers.org/server/shaka-gold/ticktest-mcp-v1)
 [![Smithery](https://img.shields.io/badge/Smithery-82%20分-success)](https://smithery.ai/server/shaka-gold/ticktest-mcp-v1)
-[![MCP](https://img.shields.io/badge/MCP-6%20Tools-blue)](https://api.ticktest.cn/mcp)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://pypi.org/project/ticktest-mcp/)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://pypi.org/project/ticktest-mcp/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+> ⚡ 没有 API Key？Agent 会自动帮你注册——四步、免费、无需离开终端。注册即送 500 信用点。
 
 ---
 
 ## ⚡ 一行配置
 
-把下面这段贴进 Claude Code 的 `.claude/settings.json`，**不需要装任何东西**：
+Python 3.10+，一行命令完成安装：
+
+```bash
+pip install ticktest-mcp
+```
+
+把下面这段贴进 Claude Code 的 `.claude/settings.json`：
 
 ```json
 {
   "mcpServers": {
     "ticktest": {
-      "type": "url",
-      "url": "https://api.ticktest.cn/mcp"
+      "command": "python",
+      "args": ["-m", "ticktest_mcp"],
+      "env": {
+        "TICKTEST_API_KEY": "tt_your_key_here"
+      }
     }
   }
 }
@@ -29,32 +42,7 @@
 
 Agent 会搜索 `sh600519` → 回测 → 返回收益率、夏普比率、最大回撤、胜率等六大指标。**海龟交易永久免费**。
 
-> 📍 也支持 ChatGPT、Cursor、Windsurf、腾讯 ADP — 任何兼容 MCP Streamable HTTP 的客户端。填 URL 即可。
-
----
-
-## 📦 本地安装（可选）
-
-```bash
-pip install ticktest-mcp
-```
-
-配置：
-
-```json
-{
-  "mcpServers": {
-    "ticktest": {
-      "command": "python",
-      "args": ["-m", "ticktest_mcp"],
-      "env": {
-        "TICKTEST_API_URL": "https://api.ticktest.cn",
-        "TICKTEST_API_KEY": "tt_your_key_here"
-      }
-    }
-  }
-}
-```
+> 📍 也支持 ChatGPT、Cursor、Windsurf、腾讯 ADP — 任何兼容 MCP 的客户端。也可通过 [Smithery](https://smithery.ai/server/shaka-gold/ticktest-mcp-v1) 零安装使用。
 
 ---
 
@@ -107,6 +95,7 @@ pip install ticktest-mcp
 - 官网：[ticktest.cn](https://ticktest.cn)
 - 注册：[ticktest.cn/developer.html](https://ticktest.cn/developer.html)
 - Smithery：[smithery.ai/server/shaka-gold/ticktest-mcp-v1](https://smithery.ai/server/shaka-gold/ticktest-mcp-v1)
+- PyPI：[pypi.org/project/ticktest-mcp](https://pypi.org/project/ticktest-mcp/)
 
 ---
 
