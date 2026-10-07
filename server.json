@@ -1,17 +1,43 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.shakagold/ticktest-mcp",
-  "title": "TickTest — A股量化回测",
-  "description": "A股量化回测 MCP Server——让 AI Agent 用自然语言回测 A 股，说一句秒出结果。单/双均线×任意周期×跨频组合，海龟交易永久免费。",
-  "version": "0.3.1",
+  "title": "TickTest",
+  "description": "A股量化波段回测 MCP Server — 让 AI Agent 用自然语言回测 A 股。单/双均线×任意周期×日/周/月×跨频组合，118条策略+540别名支持自然语言直呼。¥0.50/次；¥1 畅测体验卡 24小时不限次（限购1次）；¥19 畅测月卡 30天不限次；海龟交易永久免费，注册送500点。",
+  "version": "0.4.0",
+  "websiteUrl": "https://ticktest.cn",
+  "repository": {
+    "url": "https://github.com/shakagold/ticktest-mcp",
+    "source": "github"
+  },
+  "icons": [
+    {
+      "src": "https://ticktest.cn/favicon.ico",
+      "mimeType": "image/x-icon"
+    }
+  ],
   "packages": [
     {
       "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
       "identifier": "ticktest-mcp",
-      "version": "0.3.1",
+      "version": "0.4.0",
+      "runtimeHint": "ticktest-mcp",
       "transport": {
         "type": "stdio"
-      }
+      },
+      "environmentVariables": [
+        {
+          "name": "TICKTEST_API_KEY",
+          "description": "TickTest API Key（ticktest.cn 注册获取，送500信用点）。不配则只能调用公开只读工具。",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "TICKTEST_API_URL",
+          "description": "API 地址，默认 https://api.ticktest.cn（也可用 https://api-hk.ticktest.cn）",
+          "isRequired": false
+        }
+      ]
     }
   ]
 }

@@ -17,7 +17,7 @@ TickTest MCP Server — AI Agent 的 A 股回测入口
     #   "command": "python",
     #   "args": ["-m", "09-MCP-Server.server"],
     #   "cwd": "/path/to/TickTest",
-    #   "env": { "TICKTEST_API_KEY": "tk_xxx", "TICKTEST_API_URL": "https://api-hk.ticktest.cn" }
+    #   "env": { "TICKTEST_API_KEY": "tk_xxx", "TICKTEST_API_URL": "https://api.ticktest.cn" }
     # }
 
 参考：
@@ -26,6 +26,10 @@ TickTest MCP Server — AI Agent 的 A 股回测入口
     - MCP 认证调研: [[2026-07-08-MCP认证支付调研报告]]
 
 变更日志：
+    v0.4.0 (2026-10-07): P0资费修正+P1口径更新 — create_payment 改三卡（单次¥0.50/畅测体验卡¥1/畅测月卡¥19）；
+                        修 ¥29 套餐文案错配（basic 已于 2026-10-04 改版为畅测月卡 ¥19/30天不限次/0点入账）；
+                        新增体验卡专用端点 /api/v1/payment/plan/first-pack/create（限购1次）；
+                        402 充值引导与 README/server.json 定价口径同步
     v0.3.1 (2026-07-13): Phase 4.1 — 402响应新增 payment_proof_format 字段，陌生Agent一次走通AI收闭环
     v0.3.0 (2026-07-13): Phase 4 — 新增 create_payment Tool，双支付码（单次¥0.50+套餐¥29），双通道提示
     v0.2.0 (2026-07-12): Phase 3 — 新增 validate_strategy / search_symbols Tool，完善 Tool 描述联动
@@ -48,7 +52,7 @@ from mcp.types import Tool, TextContent
 
 # ── 配置 ──────────────────────────────────────────────
 
-API_URL = os.environ.get("TICKTEST_API_URL", "https://api-hk.ticktest.cn").rstrip("/")
+API_URL = os.environ.get("TICKTEST_API_URL", "https://api.ticktest.cn").rstrip("/")
 API_KEY = os.environ.get("TICKTEST_API_KEY", "")
 HAS_AUTH = bool(API_KEY)
 
@@ -251,17 +255,6 @@ def get_capabilities() -> dict:
         except httpx.HTTPStatusError as e:
             elapsed = time.time() - t0
             return _log_http_error("get_capabilities", e, elapsed)
-
-    # ── 注入 onboarding 引导（Agent 打开 capabilities 第一眼就看到）──
-    if result and isinstance(result, dict):
-        result = {
-            "onboarding": {
-                "title": "注册即送500信用点，无需离开终端",
-                "steps": ["提供邮箱", "接收验证码", "获取API Key", "开始回测"],
-                "free_strategy": "海龟交易永久免费",
-            },
-            **result,
-        }
 
     return result
 
@@ -648,9 +641,9 @@ def run_backtest(
                 "credit_cost": "¥0.50/次（25信用点）",
                 "recharge": body.get("recharge", {}),
                 "payment_methods_available": body.get("payment_methods_available", ["credits", "alipay"]),
-                "hint": "信用点不足时的充值方法：\n1.【推荐】调用本 MCP 的 create_payment Tool → 自动弹出单次¥0.50+套餐¥29双支付页面 → 支付宝扫码 → 到账后重试回测\n2.【AI收原生】若 Agent 安装了 @alipay/mcp-server-alipay → 解析 payment_needed_header → 用 Alipay MCP 支付 → 带回 payment_proof 重试\n3. 海龟交易策略永久免费，新手注册即送500信用点",
+                "hint": "信用点不足时的充值方法：\n1.【推荐】调用本 MCP 的 create_payment Tool → 自动弹出三卡支付页（单次¥0.50 / ¥1畅测体验卡24h不限次限购1次 / ¥19畅测月卡30天不限次）→ 支付宝扫码 → 权益自动生效后重试回测\n2.【AI收原生】若 Agent 安装了 @alipay/mcp-server-alipay → 解析 payment_needed_header → 用 Alipay MCP 支付 → 带回 payment_proof 重试\n3. 海龟交易策略永久免费，新手注册即送500信用点（≈20次）",
                 "routes": {
-                    "mcp_builtin": "调用 create_payment Tool（本 MCP Server 自带，兜底通道）",
+                    "mcp_builtin": "调用 create_payment Tool（本 MCP Server 自带兜底通道，三卡：¥0.50单次/¥1体验卡/¥19月卡）",
                     "ai_pay_402": "payment_needed_header 已透传 → Alipay MCP 支付 → 带回 payment_proof 重试 → 全自动闭环",
                     "free_strategy": "海龟交易永久免费，strategy='海龟交易' 即可零成本回测",
                 },
@@ -785,11 +778,12 @@ def create_payment(
     strategy: str = "",
 ) -> dict:
     """
-    创建支付订单 — 同时生成「单次回测 ¥0.50」和「基础套餐 ¥29」两张支付码。
+    创建支付订单 — 同时生成三张支付码：单次回测 ¥0.50 / 畅测体验卡 ¥1 / 畅测月卡 ¥19。
 
-    调用 TickTest 的两个支付 API 端点:
-      - POST /v1/payment/create        → 单次回测支付
-      - POST /v1/payment/alipay/credit/create → 信用套餐充值 (需 API Key)
+    调用 TickTest 的三个支付 API 端点:
+      - POST /v1/payment/create                      → 单次回测支付 ¥0.50
+      - POST /api/v1/payment/plan/first-pack/create  → 畅测体验卡 ¥1（24h不限次，每账户限购1次，需 API Key）
+      - POST /v1/payment/alipay/credit/create        → 畅测月卡 ¥19（30天不限次，0点入账，需 API Key）
 
     Args:
         symbol: 股票代码（用于订单关联，可选）
@@ -802,10 +796,13 @@ def create_payment(
             "single_backtest": {              # 单次回测 ¥0.50
                 "out_trade_no", "amount", "payment_form", ...
             },
-            "credit_package": {               # 基础套餐 ¥29
-                "out_trade_no", "amount", "plan_name", "credits", "payment_form", ...
+            "first_pack": {                   # 畅测体验卡 ¥1（限购1次，已购时 success=false + already_purchased）
+                "out_trade_no", "amount", "plan_name", "payment_form", ...
             },
-            "routes_note": "双通道说明",
+            "credit_package": {               # 畅测月卡 ¥19（生效中时 success=false + 提示续购时机）
+                "out_trade_no", "amount", "plan_name", "payment_form", ...
+            },
+            "routes_note": "三卡说明",
             "combined_html": "<html>...</html>" # 可直接打开的支付页面
         }
     """
@@ -822,11 +819,15 @@ def create_payment(
             "usage": "在 run_backtest 中 strategy 参数填「海龟交易」即可，无需任何支付。",
         },
         "single_backtest": None,
+        "first_pack": None,
         "credit_package": None,
         "routes_note": (
-            "🔀 双通道支付说明：\n"
+            "🔀 三卡支付说明（2026-10 价目）：\n"
+            "  • 单次回测 ¥0.50 — 1次回测，按需付费\n"
+            "  • 畅测体验卡 ¥1 — 24小时回测不限次，新人限购1次（推荐首次尝鲜）\n"
+            "  • 畅测月卡 ¥19 — 30天回测不限次（真·不限次，仅并发≤2），0点入账，订单即权益\n"
             "  • 若您的 Agent 安装了 @alipay/mcp-server-alipay → 可用其 create-*-payment 工具走 AI收 402 原生流程\n"
-            "  • 本 Tool 永远可用 → 支付宝网页扫码 → 自动充值到账 → 重试回测（无需 Payment-Proof 头）"
+            "  • 本 Tool 永远可用 → 支付宝网页扫码 → 支付后自动生效 → 重试回测（无需 Payment-Proof 头）"
         ),
         "combined_html": None,
     }
@@ -862,7 +863,48 @@ def create_payment(
         logger.error(f"Tool: create_payment — 单次支付异常: {e}")
         result["single_backtest"] = {"success": False, "error": str(e)}
 
-    # ── 2. 信用套餐支付 ¥29 基础版（page pay → 提取 URL → HTML 端生成 QR 码）──
+    # ── 2. 畅测体验卡 ¥1（24h不限次，每账户限购1次；专用端点，不在 CREDIT_PLANS）──
+    try:
+        r = _http_request("POST", "/api/v1/payment/plan/first-pack/create", json_payload={})
+        r.raise_for_status()
+        pack_data = _safe_json(r)
+
+        if pack_data.get("success") and pack_data.get("payment_form"):
+            form = pack_data["payment_form"]
+            import re as _re
+            out_trade_no_m = _re.search(r'(TICKTEST_[^"&\\\s<>]+)', form)
+
+            result["first_pack"] = {
+                "success": True,
+                "out_trade_no": pack_data.get("out_trade_no") or (out_trade_no_m.group(1) if out_trade_no_m else ""),
+                "amount": pack_data.get("amount") or "1.00",
+                "plan_name": pack_data.get("plan_name") or "畅测体验卡",
+                "payment_form": form,
+                "description": "畅测体验卡 — ¥1 = 24小时回测不限次（新人限购1次）",
+            }
+            logger.info(f"Tool: create_payment — 体验卡创建成功 | {result['first_pack']['out_trade_no']}")
+        else:
+            # 优雅降级：UNAUTHORIZED（未配Key/未登录）或 FIRST_PACK_ALREADY_PURCHASED（限购1次已购）
+            code = pack_data.get("code", "")
+            msg = pack_data.get("message", "未知错误")
+            if code == "FIRST_PACK_ALREADY_PURCHASED":
+                note = "体验卡每账户限购1次，本账户已购买过（24h 权益或已过期）。推荐直接购 ¥19 畅测月卡。"
+            elif code == "UNAUTHORIZED":
+                note = "体验卡购买需登录态（TICKTEST_API_KEY）。未配 Key 时此卡不可用，单次/月卡不受影响。"
+            else:
+                note = f"体验卡暂不可购：{msg}"
+            logger.warning(f"Tool: create_payment — 体验卡未出码 [{code}]: {msg}")
+            result["first_pack"] = {
+                "success": False,
+                "code": code,
+                "note": note,
+                "payment_form": "",
+            }
+    except Exception as e:
+        logger.error(f"Tool: create_payment — 体验卡异常: {e}")
+        result["first_pack"] = {"success": False, "error": str(e), "payment_form": ""}
+
+    # ── 3. 畅测月卡 ¥19 / 30天不限次（plan_id=basic，2026-10-04 改版：0点入账，订单即权益）──
     try:
         payload_credit = {"plan_id": "basic"}
         r = _http_request("POST", "/v1/payment/alipay/credit/create", json_payload=payload_credit)
@@ -876,47 +918,55 @@ def create_payment(
             result["credit_package"] = {
                 "success": True,
                 "out_trade_no": credit_data.get("out_trade_no", ""),
-                "amount": credit_data.get("amount", "29.00"),
-                "plan_name": credit_data.get("plan_name", "入门套餐"),
-                "credits": credit_data.get("credits", 2500),
+                "amount": credit_data.get("amount", "19.00"),
+                "plan_name": credit_data.get("plan_name", "畅测月卡"),
+                "credits": credit_data.get("credits", 0),
                 "payment_form": form,
-                "description": f"入门套餐 — {credit_data.get('credits', 2500)}信用点（≈100次回测）",
+                "description": "畅测月卡 — ¥19 = 30天回测不限次（0点入账，订单即权益，单用户并发≤2）",
             }
-            logger.info(f"Tool: create_payment — 套餐支付创建成功 | {result['credit_package']['out_trade_no']} | {result['credit_package']['plan_name']} ¥{result['credit_package']['amount']}")
+            logger.info(f"Tool: create_payment — 月卡创建成功 | {result['credit_package']['out_trade_no']} | {result['credit_package']['plan_name']} ¥{result['credit_package']['amount']}")
         else:
-            logger.warning(f"Tool: create_payment — 套餐支付创建失败: {credit_data}")
-            result["credit_package"] = {"success": False, "error": credit_data.get("message", "未知错误（可能需要先注册账号）")}
+            # 优雅降级：月卡生效中拒重复购
+            msg = credit_data.get("message", "未知错误")
+            note = ("畅测月卡生效中，无需重复购买（拒单非故障）。" if "生效中" in msg
+                    else f"月卡暂不可购：{msg}")
+            logger.warning(f"Tool: create_payment — 月卡未出码: {msg}")
+            result["credit_package"] = {
+                "success": False,
+                "note": note,
+                "payment_form": "",
+            }
     except Exception as e:
-        logger.error(f"Tool: create_payment — 套餐支付异常: {e}")
-        result["credit_package"] = {"success": False, "error": str(e)}
+        logger.error(f"Tool: create_payment — 月卡异常: {e}")
+        result["credit_package"] = {"success": False, "error": str(e), "payment_form": ""}
 
-    # ── 3. 生成合并支付页面 HTML（点击跳转支付宝官方支付页）──
+    # ── 4. 生成合并支付页面 HTML（点击跳转支付宝官方支付页）──
     try:
         import re as _re
         single_form = (result["single_backtest"] or {}).get("payment_form", "")
+        pack_form = (result["first_pack"] or {}).get("payment_form", "")
         credit_form = (result["credit_package"] or {}).get("payment_form", "")
 
         # 提取支付宝 URL
-        single_url = ""
-        credit_url = ""
-        if single_form:
-            m = _re.search(r'action="([^"]+)"', single_form)
-            if m: single_url = m.group(1).replace("&amp;", "&")
-        if credit_form:
-            m = _re.search(r'action="([^"]+)"', credit_form)
-            if m: credit_url = m.group(1).replace("&amp;", "&")
+        def _form_url(form: str) -> str:
+            if not form:
+                return ""
+            m = _re.search(r'action="([^"]+)"', form)
+            return m.group(1).replace("&amp;", "&") if m else ""
 
         combined_html = _build_combined_payment_html(
             symbol=symbol or "sz300308",
             strategy=strategy or "单次回测",
-            single_form=single_form if single_form else "",
-            credit_form=credit_form if credit_form else "",
-            single_alipay_url=single_url,
-            credit_alipay_url=credit_url,
+            single_form=single_form,
+            pack_form=pack_form,
+            credit_form=credit_form,
+            single_alipay_url=_form_url(single_form),
+            pack_alipay_url=_form_url(pack_form),
+            credit_alipay_url=_form_url(credit_form),
             single_amount="0.50",
-            credit_amount=(result["credit_package"] or {}).get("amount", "29.00"),
-            credit_plan=(result["credit_package"] or {}).get("plan_name", "入门套餐"),
-            credit_points=str((result["credit_package"] or {}).get("credits", 2500)),
+            pack_amount=(result["first_pack"] or {}).get("amount", "1.00"),
+            credit_amount=(result["credit_package"] or {}).get("amount", "19.00"),
+            credit_plan=(result["credit_package"] or {}).get("plan_name", "畅测月卡"),
         )
         result["combined_html"] = combined_html
     except Exception as e:
@@ -932,25 +982,42 @@ def _build_combined_payment_html(
     symbol: str,
     strategy: str,
     single_form: str,
+    pack_form: str,
     credit_form: str,
     single_alipay_url: str,
+    pack_alipay_url: str,
     credit_alipay_url: str,
     single_amount: str,
+    pack_amount: str,
     credit_amount: str,
     credit_plan: str,
-    credit_points: str,
 ) -> str:
-    """构建双支付卡片的合并 HTML 页面——点击跳转支付宝官方支付页，用支付宝自己的码，百分百支付成功。"""
+    """构建三支付卡片的合并 HTML 页面——点击跳转支付宝官方支付页，用支付宝自己的码，百分百支付成功。"""
     import re as _re
     # 提取 biz_content
-    single_biz = ""
-    credit_biz = ""
-    if single_form:
-        m = _re.search(r'name="biz_content"\s+value="([^"]*)"', single_form)
-        if m: single_biz = m.group(1)
-    if credit_form:
-        m = _re.search(r'name="biz_content"\s+value="([^"]*)"', credit_form)
-        if m: credit_biz = m.group(1)
+    def _form_biz(form: str) -> str:
+        if not form:
+            return ""
+        m = _re.search(r'name="biz_content"\s+value="([^"]*)"', form)
+        return m.group(1) if m else ""
+
+    single_biz = _form_biz(single_form)
+    pack_biz = _form_biz(pack_form)
+    credit_biz = _form_biz(credit_form)
+
+    def _pay_area(form_id: str, form: str, url: str, icon: str, amount: str) -> str:
+        """有表单 → 可点击跳转区；无表单 → 置灰不可购提示"""
+        if form and url:
+            return f'''<div class="qrcode-area" onclick="document.getElementById('{form_id}').submit()" title="点击跳转支付宝官方支付页">
+          <div class="qr-icon">{icon}</div>
+          <div class="qr-text">点击支付 ¥{amount}</div>
+          <div class="qr-hint">跳转支付宝官方页面支付</div>
+        </div>'''
+        return '''<div class="qrcode-area qrcode-off">
+          <div class="qr-icon">🔒</div>
+          <div class="qr-text" style="color:#999;">暂不可购</div>
+          <div class="qr-hint">已购/未登录/生效中 — 见上方卡片说明</div>
+        </div>'''
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -961,7 +1028,7 @@ def _build_combined_payment_html(
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }}
-  .container {{ max-width: 800px; margin: 0 auto; }}
+  .container {{ max-width: 1080px; margin: 0 auto; }}
   h1 {{ color: white; text-align: center; font-size: 28px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }}
   .subtitle {{ color: rgba(255,255,255,0.85); text-align: center; font-size: 14px; margin-bottom: 24px; }}
 
@@ -970,13 +1037,14 @@ def _build_combined_payment_html(
   .free-banner h2 {{ font-size: 22px; margin-bottom: 4px; }}
   .free-banner p {{ font-size: 14px; opacity: 0.9; }}
 
-  .cards {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
-  @media (max-width: 640px) {{ .cards {{ grid-template-columns: 1fr; }} }}
+  .cards {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }}
+  @media (max-width: 900px) {{ .cards {{ grid-template-columns: 1fr; }} }}
 
   .card {{ background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }}
   .card-header {{ padding: 20px 24px 12px; text-align: center; }}
   .card-header .badge {{ display: inline-block; background: #f0f5ff; color: #1677ff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 8px; }}
   .card-header .badge.pro {{ background: #fff7e6; color: #fa8c16; }}
+  .card-header .badge.trial {{ background: #f6ffed; color: #52c41a; }}
   .card-header .price {{ font-size: 36px; font-weight: bold; color: #1a1a1a; }}
   .card-header .price small {{ font-size: 16px; color: #999; font-weight: normal; }}
   .card-header .desc {{ color: #666; font-size: 13px; margin-top: 4px; }}
@@ -984,7 +1052,9 @@ def _build_combined_payment_html(
   .card-body {{ padding: 0 24px 20px; }}
   .qrcode-area {{ text-align: center; cursor: pointer; border: 2px dashed #e8e8e8; border-radius: 12px; padding: 20px; transition: all 0.3s; }}
   .qrcode-area:hover {{ border-color: #1677ff; background: #f0f5ff; }}
-  .qrcode-area .qr-icon {{ font-size: 64px; margin-bottom: 8px; }}
+  .qrcode-area.qrcode-off {{ cursor: not-allowed; background: #fafafa; }}
+  .qrcode-area.qrcode-off:hover {{ border-color: #e8e8e8; background: #fafafa; }}
+  .qrcode-area .qr-icon {{ font-size: 56px; margin-bottom: 8px; }}
   .qrcode-area .qr-text {{ color: #1677ff; font-size: 16px; font-weight: bold; }}
   .qrcode-area .qr-hint {{ color: #999; font-size: 12px; margin-top: 4px; }}
 
@@ -1010,7 +1080,7 @@ def _build_combined_payment_html(
     <p style="margin-top:8px;font-size:13px;">💡 在 run_backtest 中 strategy 填「海龟交易」即可，零成本体验回测。</p>
   </div>
 
-  <!-- 双支付卡片 -->
+  <!-- 三支付卡片 -->
   <div class="cards">
     <!-- 单次回测 ¥0.50 -->
     <div class="card" id="card-single">
@@ -1020,38 +1090,44 @@ def _build_combined_payment_html(
         <div class="desc">1次回测，按需付费</div>
       </div>
       <div class="card-body">
-        <div class="qrcode-area" onclick="document.getElementById('form-single').submit()" title="点击跳转支付宝官方支付页">
-          <div class="qr-icon">📱</div>
-          <div class="qr-text">点击支付 ¥{single_amount}</div>
-          <div class="qr-hint">跳转支付宝官方页面支付</div>
-        </div>
+        {_pay_area('form-single', single_form, single_alipay_url, '📱', single_amount)}
         <div class="refund-warning">⚠️ 单次回测为虚拟商品<br>一经售出<span>概不退款</span></div>
       </div>
     </div>
 
-    <!-- 基础套餐 ¥29 -->
+    <!-- 畅测体验卡 ¥1 -->
+    <div class="card" id="card-pack">
+      <div class="card-header">
+        <div class="badge trial">🌱 新人尝鲜</div>
+        <div class="price">{pack_amount}<small> 元</small></div>
+        <div class="desc">24小时回测不限次 · 限购1次</div>
+      </div>
+      <div class="card-body">
+        {_pay_area('form-pack', pack_form, pack_alipay_url, '🌱', pack_amount)}
+        <div class="refund-warning">⚠️ 虚拟商品一经售出<span>概不退款</span><br>支付后 24 小时内真·不限次回测</div>
+      </div>
+    </div>
+
+    <!-- 畅测月卡 ¥19 -->
     <div class="card" id="card-credit">
       <div class="card-header">
         <div class="badge pro">⭐ 推荐</div>
         <div class="price">{credit_amount}<small> 元</small></div>
-        <div class="desc">{credit_plan} · {credit_points} 信用点 · ≈100次回测</div>
+        <div class="desc">{credit_plan} · 30天回测不限次</div>
       </div>
       <div class="card-body">
-        <div class="qrcode-area" onclick="document.getElementById('form-credit').submit()" title="点击跳转支付宝官方支付页">
-          <div class="qr-icon">💳</div>
-          <div class="qr-text">点击支付 ¥{credit_amount}</div>
-          <div class="qr-hint">跳转支付宝官方页面支付</div>
-        </div>
-        <div class="refund-warning">⚠️ 虚拟商品一经售出<span>概不退款</span><br>支付后自动充值到账，即可继续回测</div>
+        {_pay_area('form-credit', credit_form, credit_alipay_url, '💳', credit_amount)}
+        <div class="refund-warning">⚠️ 虚拟商品一经售出<span>概不退款</span><br>支付后 30 天真·不限次（单用户并发≤2）</div>
       </div>
     </div>
   </div>
 
-  <!-- 双通道说明 -->
+  <!-- 支付说明 -->
   <div class="routes-note">
     <strong>📋 支付说明：</strong><br>
-    · 支付后<strong>自动充值到账</strong>，到账后即可继续回测<br>
-    · <strong>海龟交易策略永久免费</strong>，新手注册即送 500 信用点<br>
+    · 支付后<strong>权益自动生效</strong>（月卡/体验卡 0 点入账，订单即权益），即可继续回测<br>
+    · <strong>海龟交易策略永久免费</strong>，新手注册即送 500 信用点（≈20 次）<br>
+    · 畅测月卡/体验卡为<strong>真·不限次</strong>（仅单用户并发≤2 的服务器安全阀）<br>
     · 虚拟商品一经售出<strong>概不退款</strong>，请确认后再支付
   </div>
 </div>
@@ -1059,6 +1135,9 @@ def _build_combined_payment_html(
 <div style="display:none;">
 <form id="form-single" method="post" action="{single_alipay_url}" target="_blank">
   <input type="hidden" name="biz_content" value="{single_biz}">
+</form>
+<form id="form-pack" method="post" action="{pack_alipay_url}" target="_blank">
+  <input type="hidden" name="biz_content" value="{pack_biz}">
 </form>
 <form id="form-credit" method="post" action="{credit_alipay_url}" target="_blank">
   <input type="hidden" name="biz_content" value="{credit_biz}">
@@ -1213,7 +1292,7 @@ async def list_tools() -> list[Tool]:
         tools.append(
             Tool(
                 name="create_payment",
-                description="创建支付订单，同时生成「单次回测 ¥0.50」和「入门套餐 ¥29（2500点≈100次）」两张支付码。支付宝网页扫码支付，到账后自动充值，即可继续回测。返回结构化支付信息 + 可直接在浏览器打开的合并支付页面 HTML。海龟交易策略永久免费，无需支付。",
+                description="创建支付订单，同时生成三张支付码：单次回测 ¥0.50、畅测体验卡 ¥1（24小时不限次，新人限购1次）、畅测月卡 ¥19（30天不限次，推荐）。支付宝网页扫码支付，权益自动生效，即可继续回测。返回结构化支付信息 + 可直接在浏览器打开的合并支付页面 HTML。已购体验卡/月卡生效中时对应卡片优雅降级不出码。海龟交易策略永久免费，无需支付。",
                 inputSchema={
                     "type": "object",
                     "properties": {
@@ -1340,7 +1419,7 @@ def _status_hint(status: int) -> str:
 async def main():
     """启动 MCP Server（stdio 传输）"""
     logger.info("=" * 50)
-    logger.info("TickTest MCP Server v0.3.1 启动")
+    logger.info("TickTest MCP Server v0.4.0 启动")
     logger.info(f"API URL: {API_URL}")
     logger.info(f"认证状态: {'已配置' if HAS_AUTH else '未配置（只读模式）'}")
     if HAS_AUTH:
