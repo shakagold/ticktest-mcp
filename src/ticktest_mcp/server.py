@@ -26,6 +26,8 @@ TickTest MCP Server — AI Agent 的 A 股回测入口
     - MCP 认证调研: [[2026-07-08-MCP认证支付调研报告]]
 
 变更日志：
+    v0.4.1 (2026-10-07): 修复 mcp 2.x 不兼容——依赖 pin 至 mcp>=1.0.0,<2.0.0（mcp 2.x 移除 list_tools 装饰器，
+                        无上限导致新用户 pip install 后启动即崩）；价目/逻辑与 0.4.0 完全一致
     v0.4.0 (2026-10-07): P0资费修正+P1口径更新 — create_payment 改三卡（单次¥0.50/畅测体验卡¥1/畅测月卡¥19）；
                         修 ¥29 套餐文案错配（basic 已于 2026-10-04 改版为畅测月卡 ¥19/30天不限次/0点入账）；
                         新增体验卡专用端点 /api/v1/payment/plan/first-pack/create（限购1次）；
@@ -1419,7 +1421,7 @@ def _status_hint(status: int) -> str:
 async def main():
     """启动 MCP Server（stdio 传输）"""
     logger.info("=" * 50)
-    logger.info("TickTest MCP Server v0.4.0 启动")
+    logger.info("TickTest MCP Server v0.4.1 启动")
     logger.info(f"API URL: {API_URL}")
     logger.info(f"认证状态: {'已配置' if HAS_AUTH else '未配置（只读模式）'}")
     if HAS_AUTH:
